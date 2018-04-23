@@ -18,46 +18,43 @@ class MyNamespace(Namespace):
     # 处理系统消息请求
     def on_message(self, message):
         print(self.namespace, str(message))
-        if self.namespace == u'/buyGrabs':
-            try:
-                import json
-                requsetData = json.loads(message['data'])
-            except:
-                pass
-            else:
-                neededArgs = {
-                    'uid': None,
-                    'auid': None,
-                    'grabid': None,
-                    'num': None,
-                    'sp': None,
-                }
-                for key, val in neededArgs.items():
-                    val = requsetData.get(key)
-                    if val is None:
-                        emit('reply', {'code':400, 'message': 'Lack Of Param Or Invalid[%s]' % (key), 'data':{}})
-                        return
-                    neededArgs[key] = val
-                # from model.UserModel import UserModel
-                # dbSql = UserModel(self.__app)
-                # data = dbSql.user_list(neededArgs)
-                # data = self.query.buy_grab(neededArgs)
-                data = {}
-                print(data)
-        else:
-            if message['data'] == 'backgroud':
+        if message['data'] == 'backgroud':
                 self.__sio.start_background_task(target=self.__background_thread)
                 emit('reply', {'data': 'backgroud function will be trigger an event'})
                 # 当前所在房间号
                 # print(self.rooms(sid))
                 # 当前namespace
                 # print(self.namespace)
-            else:
-                emit('reply', {'data': message['data']})
+        else:
+            if self.namespace == u'/buyGrab':
+                try:
+                    import json
+                    requsetData = json.loads(message['data'])
+                except:
+                    pass
+                else:
+                    neededArgs = {
+                        'uid': None,
+                        'auid': None,
+                        'grabid': None,
+                        'num': None,
+                        'sp': None,
+                    }
+                    for key, val in neededArgs.items():
+                        val = requsetData.get(key)
+                        if val is None:
+                            emit('reply', {'code':400, 'message': 'Lack Of Param Or Invalid[%s]' % (key), 'data':{}})
+                            return
+                        neededArgs[key] = val
+                    from model.UserModel import UserModel
+                    import random
+                    dbModel = UserModel()
+                    data = dbModel.User(random.choice(range(1, 90000)))
+                    message['data'] = data
+            session['receive_count'] = session.get('receive_count', 0) + 1
+            emit('reply',
+                {'data': message['data'], 'count': session['receive_count']})
 
-        session['receive_count'] = session.get('receive_count', 0) + 1
-        emit('reply',
-             {'data': message['data'], 'count': session['receive_count']})
     
     # 处理广播消息请求
     def on_broadcastMsg(self, message):
